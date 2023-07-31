@@ -1,4 +1,4 @@
-import { Component } from "react";
+import { useState } from "react";
 
 import AppInfo from "../app-info/app-info";
 import SearchPanel from "../search-panel/search-panel";
@@ -10,78 +10,61 @@ import "./app.css";
 
 
 
-class App extends Component{
-    constructor(props){
-        super(props)
-        this.state={
-            data:[
-                {name:'John C.', salary:800, increase:false,rise:false, id:1},
-                {name:'Alex M.', salary:1200, increase:false,rise:false, id:2},
-                {name:'Carl', salary:1600, increase:false,rise:false, id:3}
-            ],
-            term:'',
-            filter:'all'
-        }
-        this.maxId=4;
-       
+const App=(props) =>{
+    const [data, setData]=useState([
+        {name:'John C.', salary:800, increase:false,rise:false, id:1},
+        {name:'Alex M.', salary:1200, increase:false,rise:false, id:2},
+        {name:'Carl', salary:1600, increase:false,rise:false, id:3}
+    ])
+    console.log(data.length)
+    const [term, setTerm]=useState('')
+    const [filter, setFilter]=useState('all')
+    let maxId=4;
+    const deleteItem=(id)=>{
+        setData(data=>data.filter(item=>item.id!==id))
     }
-    deleteItem=(id)=>{
-        this.setState(({data})=>{
-            return{
-                data:data.filter(item=>item.id!==id)
-            }
-        })
-    }
-    addItem=(item)=>{
-        this.setState(({data})=>{
+    const addItem=(item)=>{
+        
+        setData(data=>{
             let objClone = JSON.parse(JSON.stringify(data));
             objClone.push(item)
-            this.maxId+=1;
-            return{
-                data:objClone
-            }
+            maxId+=1;
+            return objClone})
+    }
+    const onToggleIncrease=(id)=>{
+        setData(data=>{
+            return data.map(item=>{
+                    if(item.id===id){
+                        return{...item,increase:!item.increase}
+                    }
+                    return item;
+                    })
         })
     }
-    onToggleIncrease=(id)=>{
-        this.setState(({data})=>({ 
-            data:data.map(item=>{
-                if(item.id===id){
-                    return{...item,increase:!item.increase}
-                }
-                return item;
-            })
-        }))
-    }
-    onToggleRise=(id)=>{
-        this.setState(({data})=>({ 
-            data:data.map(item=>{
-                if(item.id===id){
-                    return{...item,rise:!item.rise}
-                }
-                return item;
-            })  
-        }))
-    }
-    countIncrease=()=>{
-        let i=0;
-        this.state.data.forEach(item=>{
-            if(item.increase){
-                i++
-            }
+    const onToggleRise=(id)=>{
+        setData(data=>{
+            return data.map(item=>{
+                    if(item.id===id){
+                        return{...item,rise:!item.rise}
+                    }
+                    return item;
+                })
         })
-        return i;
+    }
+    const countIncrease=()=>{
+        return data.filter(item=>item.increase).length;
     }
 
-    searchEmp=(items,term)=>{
+    const searchEmp=(items,term)=>{
         if(term===''){
             return items;
         }
         return items.filter(item=>item.name.indexOf(term)>-1)
     }
-    onUpdateSearch=(term)=>{
-        this.setState({term});
+    const onUpdateSearch=(term)=>{
+        setTerm(term)
     }
-    filterPost=(items,filter)=>{
+    const filterPost=(items,filter)=>{
         switch(filter){
             case 'rise':
                 return items.filter(item=>item.rise)
@@ -91,43 +74,42 @@ class App extends Component{
                 return items
         }
     }
-    onFilterSelect=(filter)=>{
-        this.setState({filter})
+    const onFilterSelect=(filter)=>{
+        setFilter(filter)
     }
-    onChangeSalary=(salary,id)=>{
-        this.setState(({data})=>({ 
-            data:data.map(item=>{
-                if(item.id===id){
-                    return{...item,salary:salary}
-                }
-                return item;
-            })  
-        }))
+    const onChangeSalary=(salary,id)=>{
+        setData(data=>{
+            return data.map(item=>{
+                    if(item.id===id){
+                        return{...item,salary:salary}
+                    }
+                    return item;
+                }) 
+        })
     }
-    render(){
-        const {term,data,filter}=this.state;
-        const visibleData=this.filterPost(this.searchEmp(data,term),filter)
-        
-        return(
-            <div className="app">
-                <AppInfo totalNumber={data.length} countIncrease={this.countIncrease}/>
-                <div className="search-panel">
-                    <SearchPanel onUpdateSearch={this.onUpdateSearch}/>
-                    <AppFilter filter={filter} onFilterSelect={this.onFilterSelect}/>
-                </div>
-                <EmployeesList 
-                data={visibleData} 
-                onDelete={this.deleteItem}
-                onToggleIncrease={this.onToggleIncrease}
-                onToggleRise={this.onToggleRise}
-                onChangeSalary={this.onChangeSalary}/>
 
-                <EmployeesAddForm 
-                onAddItem={this.addItem} 
-                currId={this.maxId}/>
+    const visibleData=filterPost(searchEmp(data,term),filter)
+    
+    return(
+        <div className="app">
+            {console.log(data)}
+            <AppInfo totalNumber={data.length} countIncrease={countIncrease}/>
+            <div className="search-panel">
+                <SearchPanel onUpdateSearch={onUpdateSearch}/>
+                <AppFilter filter={filter} onFilterSelect={onFilterSelect}/>
             </div>
-        );
-    }
+            <EmployeesList 
+            data={visibleData} 
+            onDelete={deleteItem}
+            onToggleIncrease={onToggleIncrease}
+            onToggleRise={onToggleRise}
+            onChangeSalary={onChangeSalary}/>
+
+            <EmployeesAddForm 
+            onAddItem={addItem} 
+            currId={maxId}/>
+        </div>
+    );
 }
 
 export default App;
